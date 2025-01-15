@@ -1,91 +1,106 @@
-package entities;
+package com.example.entity;
 
-
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Set;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.NamedQueries;
-import jakarta.persistence.NamedQuery;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-
-@Setter
-@Getter
-@EqualsAndHashCode
-@NoArgsConstructor
-
 
 @Entity
-@Table (name = "NhaCungCap")
-
-
-// JPQL Queries
-@NamedQueries({ 
-	@NamedQuery(name = "NhaCungCap.findAll", query = "SELECT ncc FROM NhaCungCap ncc"),
-	@NamedQuery(name = "NhaCungCap.findByMaNCC", query = "SELECT ncc FROM NhaCungCap ncc WHERE ncc.maNCC = :maNCC"),
-	@NamedQuery(name = "NhaCungCap.findByTenNCC", query = "SELECT ncc FROM NhaCungCap ncc WHERE ncc.tenNCC = :tenNCC"),
+@Table(name = "NhaCungCap")
+@NamedQueries({
+        @NamedQuery(name = "NhaCungCap.findAll", query = "SELECT ncc FROM NhaCungCap ncc"),
+        @NamedQuery(name = "NhaCungCap.findByMaNhaCungCap", query = "SELECT ncc FROM NhaCungCap ncc WHERE ncc.maNhaCungCap = :maNhaCungCap"),
+        @NamedQuery(name = "NhaCungCap.findByTenNhaCungCap", query = "SELECT ncc FROM NhaCungCap ncc WHERE ncc.tenNhaCungCap LIKE :tenNhaCungCap"),
+        @NamedQuery(name = "NhaCungCap.findByEmail", query = "SELECT ncc FROM NhaCungCap ncc WHERE ncc.email = :email")
 })
-
-
 public class NhaCungCap implements Serializable {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Id
-	@Column (name = "maNCC", columnDefinition = "VARCHAR(20)", unique = true, nullable = false)
-	private String maNCC;
-	
-	@Column (name = "tenNCC", columnDefinition = "NVARCHAR(255)")
-	private String tenNCC;
-	
-	@Column (name = "sdt", columnDefinition = "VARCHAR(20)")
-	private String Sdt;
-	
-	@Column (name = "email", columnDefinition = "VARCHAR(255)")
-	private String email;
-	
-	@Column (name = "diaChi", columnDefinition = "NVARCHAR(255)")
-	private String diaChi;
-	
-	@OneToMany (mappedBy = "nhaCungCap")
-	private Set<SanPham> sanPham;
-	
-	
-	// Constructors
-	public NhaCungCap (String maNCC, String tenNCC, String sdt, String email, String diaChi) {
-		this.maNCC = maNCC;
-		this.tenNCC = tenNCC;
-		this.Sdt = sdt;
-		this.email = email;
-		this.diaChi = diaChi;
-	}
-	
-	
-	public NhaCungCap (String maNCC) {
-		this.maNCC = maNCC;
-	}
-	
-	
-	public NhaCungCap (String maNCC, String tenNCC) {
-		this.maNCC = maNCC;
-		this.tenNCC = tenNCC;
-	}
-	
-	
-	// toString
-	@Override
-	public String toString() {
-		return String.format("NhaCungCap [maNCC = %s, tenNCC = %s, sdt = %s, email = %s, diaChi = %s]", 
-			maNCC, tenNCC, Sdt, email, diaChi);
-	}
+    @Id
+    @Column(name = "maNhaCungCap", columnDefinition = "VARCHAR(20)", nullable = false, unique = true)
+    private String maNhaCungCap;
 
+    @Column(name = "tenNhaCungCap", columnDefinition = "NVARCHAR(255)", nullable = false)
+    private String tenNhaCungCap;
+
+    @Column(name = "diaChi", columnDefinition = "NVARCHAR(255)")
+    private String diaChi;
+
+    @Column(name = "soDienThoai", columnDefinition = "VARCHAR(20)", nullable = false)
+    private String soDienThoai;
+
+    @Column(name = "email", columnDefinition = "VARCHAR(255)", unique = true, nullable = false)
+    private String email;
+
+    @OneToMany(mappedBy = "nhaCungCap", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<SanPham> sanPhamList;
+
+    // Constructors
+    public NhaCungCap() {
+    }
+
+    public NhaCungCap(String maNhaCungCap, String tenNhaCungCap, String diaChi, String soDienThoai, String email) {
+        this.maNhaCungCap = maNhaCungCap;
+        this.tenNhaCungCap = tenNhaCungCap;
+        this.diaChi = diaChi;
+        this.soDienThoai = soDienThoai;
+        this.email = email;
+    }
+
+    // Getters and Setters
+    public String getMaNhaCungCap() {
+        return maNhaCungCap;
+    }
+
+    public void setMaNhaCungCap(String maNhaCungCap) {
+        this.maNhaCungCap = maNhaCungCap;
+    }
+
+    public String getTenNhaCungCap() {
+        return tenNhaCungCap;
+    }
+
+    public void setTenNhaCungCap(String tenNhaCungCap) {
+        this.tenNhaCungCap = tenNhaCungCap;
+    }
+
+    public String getDiaChi() {
+        return diaChi;
+    }
+
+    public void setDiaChi(String diaChi) {
+        this.diaChi = diaChi;
+    }
+
+    public String getSoDienThoai() {
+        return soDienThoai;
+    }
+
+    public void setSoDienThoai(String soDienThoai) {
+        this.soDienThoai = soDienThoai;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public List<SanPham> getSanPhamList() {
+        return sanPhamList;
+    }
+
+    public void setSanPhamList(List<SanPham> sanPhamList) {
+        this.sanPhamList = sanPhamList;
+    }
+
+    // Override toString
+    @Override
+    public String toString() {
+        return String.format(
+                "NhaCungCap [maNhaCungCap=%s, tenNhaCungCap=%s, diaChi=%s, soDienThoai=%s, email=%s]",
+                maNhaCungCap, tenNhaCungCap, diaChi, soDienThoai, email
+        );
+    }
 }
