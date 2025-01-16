@@ -33,8 +33,8 @@ public class SanPham implements Serializable{
     @Column(name = "moTa", columnDefinition = "nvarchar(200)")
     private String moTa;
 
-    @Column(name = "tacGia", columnDefinition = "nvarchar(200)")
-    private String tacgia;
+    @Column(name = "thuongHieu", columnDefinition = "nvarchar(200)")
+    private String thuongHieu;
 
     @ManyToOne
     @JoinColumn(name = "maNCC")
@@ -63,7 +63,7 @@ public class SanPham implements Serializable{
 		this.tenSanPham = tenSach;
 		this.donGia = donGia;
 		this.moTa = moTa;
-		this.tacgia = tacgia;
+		this.thuongHieu = thuongHieu;
 		this.nhacungcap = nhacungcap;
 		this.loaisanpham = loaisanpham;
 		this.trangThai = trangThai;
@@ -109,12 +109,12 @@ public class SanPham implements Serializable{
 		this.moTa = moTa;
 	}
 
-	public String getTacgia() {
-		return tacgia;
+	public String getThuongHieu() {
+		return thuongHieu;
 	}
 
-	public void setTacgia(String tacgia) {
-		this.tacgia = tacgia;
+	public void setThuongHieu(String thuonghieu) {
+		this.thuongHieu = thuonghieu;
 	}
 
 	public NhaCungCap getNhacungcap() {
