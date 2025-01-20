@@ -5,6 +5,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 
 import dao_interface.SanPham_DAO_Interface;
+import entities.KhachHang;
 import entities.SanPham;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -53,8 +54,48 @@ public class SanPham_DAO extends UnicastRemoteObject implements SanPham_DAO_Inte
     }
 
 	@Override
-	public boolean update(SanPham sanpham) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	 public boolean update(SanPham sanpham) {
+        try {
+            entityManager.getTransaction().begin();
+            entityManager.merge(sanpham);
+            entityManager.getTransaction().commit();
+            return true;
+        } catch (Exception e) {
+            if (entityManager.getTransaction().isActive()) {
+                entityManager.getTransaction().rollback();
+            }
+            e.printStackTrace();
+            return false;
+        }
+    }
+	public boolean updateTrangThaiSanPham(SanPham sanpham) {
+        try {
+            entityManager.getTransaction().begin();
+            sanpham.setTrangThai(false); 
+            entityManager.merge(sanpham);
+            entityManager.getTransaction().commit();
+            return true;
+        } catch (Exception e) {
+            if (entityManager.getTransaction().isActive()) {
+                entityManager.getTransaction().rollback();
+            }
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateKH(KhachHang kh) {
+        try {
+            entityManager.getTransaction().begin();
+            entityManager.merge(kh);
+            entityManager.getTransaction().commit();
+            return true;
+        } catch (Exception e) {
+            if (entityManager.getTransaction().isActive()) {
+                entityManager.getTransaction().rollback();
+            }
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
