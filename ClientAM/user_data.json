@@ -1,0 +1,24 @@
+{
+  "test@example.com": {
+    "id": 1,
+    "password": "password",
+    "fullName": "Test User",
+    "email": "test@example.com",
+    "role": "CUSTOMER"
+  },
+  "admin@example.com": {
+    "id": 2,
+    "password": "admin",
+    "fullName": "NgocThai",
+    "email": "admin@example.com",
+    "role": "ADMIN"
+  },
+  "thaotien23vn@gmail.com": {
+    "id": 3,
+    "password": "123123",
+    "fullName": "tranthaotien",
+    "email": "thaotien23vn@gmail.com",
+    "phone": "0327045644",
+    "address": "TPHCM"
+  }
+}
