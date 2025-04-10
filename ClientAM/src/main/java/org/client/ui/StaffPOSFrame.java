@@ -1,26 +1,18 @@
 package org.client.ui;
 
+import org.client.entities.User;
 import org.client.services.ClientService;
 import org.client.services.impl.MockClientServiceImpl;
-import org.client.entities.User;
-import org.client.entities.Order;
-import org.client.entities.OrderItem;
-import org.client.entities.CartItem;
-import org.client.entities.Product;
-import org.client.entities.Customer;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.ArrayList;
 
 public class StaffPOSFrame extends JFrame {
     // Main panels
@@ -30,16 +22,6 @@ public class StaffPOSFrame extends JFrame {
     private JPanel cartPanel;
     private JPanel accountPanel;
     private JPanel helpPanel;
-    private JPanel searchPanel;
-    
-    // Màu sắc chính cho giao diện - đồng bộ với LoginFrame
-    private final Color PRIMARY_COLOR = new Color(199, 21, 63); // Hồng đậm
-    private final Color BACKGROUND_COLOR = new Color(255, 248, 220); // Be nhạt
-    private final Color ACCENT_COLOR = new Color(0, 123, 255); // Xanh dương
-    private final Color TEXT_COLOR = new Color(51, 51, 51); // Xám đậm
-    private final Font HEADER_FONT = new Font("Arial", Font.BOLD, 24);
-    private final Font REGULAR_FONT = new Font("Arial", Font.PLAIN, 14);
-    private final Font BUTTON_FONT = new Font("Arial", Font.BOLD, 14);
     
     // Product panel components
     private JTable productTable;
@@ -66,9 +48,6 @@ public class StaffPOSFrame extends JFrame {
     // Client service for backend operations
     private ClientService clientService;
     
-    // Current logged-in user
-    private User currentUser;
-    
     /**
      * Create the frame.
      * @param clientService The client service for backend operations
@@ -76,17 +55,9 @@ public class StaffPOSFrame extends JFrame {
     public StaffPOSFrame(ClientService clientService) {
         this.clientService = clientService;
         setTitle("Trang chủ");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setBounds(100, 100, 1024, 600);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        
-        // Get current user information
-        try {
-            this.currentUser = clientService.getUserInfo();
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Không thể lấy thông tin người dùng", "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
         
         initComponents();
         loadSampleProducts();
@@ -96,129 +67,43 @@ public class StaffPOSFrame extends JFrame {
      * Initialize all UI components.
      */
     private void initComponents() {
-        // Thiết lập giao diện chính với màu nền mới
         contentPane = new JPanel();
-        contentPane.setBorder(new EmptyBorder(10, 10, 10, 10));
+        contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         contentPane.setLayout(new BorderLayout(0, 0));
-        contentPane.setBackground(BACKGROUND_COLOR);
         setContentPane(contentPane);
         
-        // Tạo tab pane với phong cách mới
+        // Create tab pane
         tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-        tabbedPane.setFont(REGULAR_FONT);
-        tabbedPane.setBackground(BACKGROUND_COLOR);
-        tabbedPane.setForeground(TEXT_COLOR);
-        
-        // Tùy chỉnh giao diện tab
-        UIManager.put("TabbedPane.selected", new Color(240, 240, 240));
-        UIManager.put("TabbedPane.contentAreaColor", BACKGROUND_COLOR);
-        UIManager.put("TabbedPane.focus", PRIMARY_COLOR);
-        UIManager.put("TabbedPane.highlight", PRIMARY_COLOR);
-        UIManager.put("TabbedPane.borderHightlightColor", PRIMARY_COLOR);
-        UIManager.put("TabbedPane.selectedForeground", PRIMARY_COLOR);
-        
         contentPane.add(tabbedPane, BorderLayout.CENTER);
         
-        // Khởi tạo các panel
+        // Initialize panels
         initProductPanel();
         initCartPanel();
         initAccountPanel();
         initHelpPanel();
-        initSearchPanel();
         
-        // Thêm các panel vào tab pane với icon
-        tabbedPane.addTab("Tài khoản", null, accountPanel, "Quản lý tài khoản");
-        tabbedPane.addTab("Giỏ hàng", null, cartPanel, "Xem giỏ hàng và thanh toán");
-        tabbedPane.addTab("Tìm kiếm", null, searchPanel, "Tìm kiếm sản phẩm");
-        tabbedPane.addTab("Trợ giúp", null, helpPanel, "Xem hướng dẫn sử dụng");
+        // Add panels to tab pane
+        tabbedPane.addTab("Tài khoản", null, accountPanel, null);
+        tabbedPane.addTab("Giỏ hàng", null, cartPanel, null);
+        tabbedPane.addTab("Trợ giúp", null, helpPanel, null);
         
-        // Tạo panel cửa hàng chính với thiết kế mới
+        // Add main product panel with store name
         JPanel storePanel = new JPanel(new BorderLayout());
-        storePanel.setBackground(BACKGROUND_COLOR);
+        JLabel storeLabel = new JLabel("Cửa hàng quần áo");
+        storeLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        storeLabel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JLabel storeSubLabel = new JLabel("Xin chào, minh");
+        storeSubLabel.setBorder(new EmptyBorder(10, 10, 0, 10));
         
-        // Tạo header với logo cửa hàng
-        JPanel headerPanel = new JPanel(new BorderLayout(20, 0));
-        headerPanel.setBackground(BACKGROUND_COLOR);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        
-        // Panel chứa tên cửa hàng
-        JPanel logoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        logoPanel.setBackground(BACKGROUND_COLOR);
-        
-        JLabel storeLabel = new JLabel("CỬA HÀNG THỜI TRANG");
-        storeLabel.setFont(HEADER_FONT);
-        storeLabel.setForeground(PRIMARY_COLOR);
-        
-        JLabel brandLabel = new JLabel("COLLABCREW");
-        brandLabel.setFont(HEADER_FONT);
-        brandLabel.setForeground(PRIMARY_COLOR);
-        
-        logoPanel.add(storeLabel);
-        logoPanel.add(Box.createHorizontalStrut(10));
-        logoPanel.add(brandLabel);
-        
-        // Panel chứa thông tin người dùng
-        JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        userPanel.setBackground(BACKGROUND_COLOR);
-        
-        // Hiển thị lời chào với tên nhân viên
-        String welcomeMessage = "Chào mừng";
-        if (currentUser != null && currentUser.getFullName() != null && !currentUser.getFullName().isEmpty()) {
-            welcomeMessage += ", " + currentUser.getFullName();
-        }
-        JLabel welcomeLabel = new JLabel(welcomeMessage);
-        welcomeLabel.setFont(REGULAR_FONT);
-        welcomeLabel.setForeground(TEXT_COLOR);
-        
-        // Nút đăng xuất
-        JButton logoutButton = new JButton("Đăng xuất");
-        logoutButton.setFont(BUTTON_FONT);
-        logoutButton.setForeground(Color.WHITE);
-        logoutButton.setBackground(PRIMARY_COLOR);
-        logoutButton.setFocusPainted(false);
-        logoutButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        logoutButton.addActionListener(e -> logout());
-        
-        userPanel.add(welcomeLabel);
-        userPanel.add(Box.createHorizontalStrut(20));
-        userPanel.add(logoutButton);
-        
-        // Thêm các panel vào header
-        headerPanel.add(logoPanel, BorderLayout.WEST);
-        headerPanel.add(userPanel, BorderLayout.EAST);
-        
-        // Thêm đường kẻ phân cách
-        JSeparator separator = new JSeparator();
-        separator.setForeground(new Color(220, 220, 220));
-        separator.setBackground(BACKGROUND_COLOR);
-        headerPanel.add(separator, BorderLayout.SOUTH);
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.add(storeLabel, BorderLayout.WEST);
+        headerPanel.add(storeSubLabel, BorderLayout.EAST);
         
         storePanel.add(headerPanel, BorderLayout.NORTH);
         storePanel.add(productPanel, BorderLayout.CENTER);
         
-        tabbedPane.insertTab("Trang chủ", null, storePanel, "Trang chủ cửa hàng", 0);
+        tabbedPane.insertTab("Trang chủ", null, storePanel, null, 0);
         tabbedPane.setSelectedIndex(0);
-    }
-    
-    /**
-     * Xử lý đăng xuất
-     */
-    private void logout() {
-        int option = JOptionPane.showConfirmDialog(
-                this,
-                "Bạn có chắc muốn đăng xuất không?",
-                "Xác nhận đăng xuất",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
-        
-        if (option == JOptionPane.YES_OPTION) {
-            // Đóng cửa sổ hiện tại và mở màn hình đăng nhập
-            LoginFrame loginFrame = new LoginFrame();
-            loginFrame.setVisible(true);
-            dispose();
-        }
     }
     
     /**
@@ -227,51 +112,25 @@ public class StaffPOSFrame extends JFrame {
     private void initProductPanel() {
         productPanel = new JPanel(new BorderLayout(10, 10));
         productPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        productPanel.setBackground(BACKGROUND_COLOR);
         
-        // Panel tìm kiếm với giao diện mới
-        JPanel searchPanel = new JPanel(new BorderLayout(10, 0));
-        searchPanel.setBackground(BACKGROUND_COLOR);
-        searchPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-        
-        JLabel searchLabel = new JLabel("Tìm kiếm sản phẩm:");
-        searchLabel.setFont(REGULAR_FONT);
-        searchLabel.setForeground(TEXT_COLOR);
-        
+        // Search panel
+        JPanel searchPanel = new JPanel(new BorderLayout());
         searchField = new JTextField();
-        searchField.setFont(REGULAR_FONT);
-        searchField.setMargin(new Insets(8, 8, 8, 8));
-        searchField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        searchField.setToolTipText("Nhập tên sản phẩm để tìm kiếm");
         
-        JButton searchButton = new JButton("Tìm kiếm");
-        searchButton.setFont(BUTTON_FONT);
-        searchButton.setBackground(ACCENT_COLOR);
-        searchButton.setForeground(Color.WHITE);
-        searchButton.setFocusPainted(false);
-        searchButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        searchButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // Thêm phím Enter để tìm kiếm
+        searchField.addActionListener(e -> searchProducts());
         
-        JPanel searchControlPanel = new JPanel(new BorderLayout(10, 0));
-        searchControlPanel.setBackground(BACKGROUND_COLOR);
-        searchControlPanel.add(searchField, BorderLayout.CENTER);
-        searchControlPanel.add(searchButton, BorderLayout.EAST);
+        JButton searchButton = new JButton("Tìm");
+        searchButton.addActionListener(e -> searchProducts());
         
-        searchPanel.add(searchLabel, BorderLayout.WEST);
-        searchPanel.add(searchControlPanel, BorderLayout.CENTER);
+        searchPanel.add(searchField, BorderLayout.CENTER);
+        searchPanel.add(searchButton, BorderLayout.EAST);
         productPanel.add(searchPanel, BorderLayout.NORTH);
         
-        // Panel danh sách sản phẩm (bên trái) với giao diện mới
+        // Product list panel (left side)
         JPanel productListPanel = new JPanel(new BorderLayout());
-        productListPanel.setBackground(BACKGROUND_COLOR);
-        productListPanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true),
-                "DANH SÁCH SẢN PHẨM",
-                TitledBorder.LEFT,
-                TitledBorder.TOP,
-                new Font("Arial", Font.BOLD, 14),
-                PRIMARY_COLOR));
+        productListPanel.setBorder(BorderFactory.createTitledBorder("Danh sách sản phẩm"));
         
         // Table for products
         String[] productColumns = {"Tên sản phẩm", "Giá"};
@@ -285,43 +144,6 @@ public class StaffPOSFrame extends JFrame {
         productTable = new JTable(productTableModel);
         productTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         productTable.getTableHeader().setReorderingAllowed(false);
-        productTable.setRowHeight(35);
-        productTable.setFont(REGULAR_FONT);
-        productTable.setGridColor(new Color(230, 230, 230));
-        productTable.setShowVerticalLines(true);
-        productTable.setShowHorizontalLines(true);
-        
-        // Tùy chỉnh header của bảng
-        productTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
-        productTable.getTableHeader().setBackground(PRIMARY_COLOR);
-        productTable.getTableHeader().setForeground(Color.WHITE);
-        productTable.getTableHeader().setPreferredSize(new Dimension(0, 40));
-        
-        // Tùy chỉnh màu nền xen kẽ cho các dòng
-        productTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                
-                if (isSelected) {
-                    c.setBackground(new Color(230, 230, 250)); // Màu khi được chọn
-                    c.setForeground(PRIMARY_COLOR);
-                } else {
-                    if (row % 2 == 0) {
-                        c.setBackground(Color.WHITE);
-                    } else {
-                        c.setBackground(new Color(248, 248, 248));
-                    }
-                    c.setForeground(TEXT_COLOR);
-                }
-                
-                // Căn giữa nội dung
-                ((JLabel) c).setHorizontalAlignment(JLabel.CENTER);
-                ((JLabel) c).setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-                
-                return c;
-            }
-        });
         
         // Add mouse listener to show product details
         productTable.addMouseListener(new MouseAdapter() {
@@ -335,8 +157,6 @@ public class StaffPOSFrame extends JFrame {
         });
         
         JScrollPane productScrollPane = new JScrollPane(productTable);
-        productScrollPane.setBorder(BorderFactory.createEmptyBorder());
-        productScrollPane.getViewport().setBackground(Color.WHITE);
         productListPanel.add(productScrollPane, BorderLayout.CENTER);
         
         // Product details panel (right side)
@@ -480,461 +300,314 @@ public class StaffPOSFrame extends JFrame {
      */
     private void initAccountPanel() {
         accountPanel = new JPanel(new BorderLayout());
-        accountPanel.setBackground(new Color(245, 245, 250));
         accountPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         
-        if (currentUser == null) {
-            JLabel noInfoLabel = new JLabel("Không có thông tin tài khoản.", SwingConstants.CENTER);
-            noInfoLabel.setFont(new Font("Arial", Font.BOLD, 16));
-            noInfoLabel.setForeground(new Color(150, 150, 150));
-            accountPanel.add(noInfoLabel, BorderLayout.CENTER);
-            return;
-        }
-        
-        // Create panel for user information
-        JPanel userInfoPanel = new JPanel();
-        userInfoPanel.setBackground(new Color(245, 245, 250));
-        userInfoPanel.setLayout(new BoxLayout(userInfoPanel, BoxLayout.Y_AXIS));
-        userInfoPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        // Header panel with title and avatar
-        JPanel headerPanel = new JPanel(new BorderLayout(15, 0));
-        headerPanel.setBackground(new Color(245, 245, 250));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
-        
-        // Create avatar panel with circular avatar
-        JPanel avatarPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setColor(new Color(208, 33, 80)); // Màu đỏ hồng từ hình ảnh
-                g2d.fillOval(0, 0, 80, 80);
-                
-                // Draw initials
-                String initials = getInitials(currentUser.getFullName());
-                g2d.setColor(Color.WHITE);
-                g2d.setFont(new Font("Arial", Font.BOLD, 32));
-                FontMetrics fm = g2d.getFontMetrics();
-                int textWidth = fm.stringWidth(initials);
-                int textHeight = fm.getHeight();
-                g2d.drawString(initials, (80 - textWidth) / 2, 40 + textHeight / 4);
-                g2d.dispose();
-            }
-            
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(80, 80);
-            }
-        };
-        
-        // Title and role panel
-        JPanel titlePanel = new JPanel();
-        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
-        titlePanel.setBackground(new Color(245, 245, 250));
-        
-        // Add user information fields
+        JPanel headerPanel = new JPanel(new BorderLayout());
         JLabel titleLabel = new JLabel("THÔNG TIN TÀI KHOẢN");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setForeground(new Color(208, 33, 80)); // Màu đỏ hồng từ hình ảnh
-        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        titleLabel.setBorder(new EmptyBorder(0, 0, 20, 0));
         
-        JLabel roleLabel = new JLabel(currentUser.getRole() != null ? currentUser.getRole() : "Nhân viên");
-        roleLabel.setFont(new Font("Arial", Font.ITALIC, 16));
-        roleLabel.setForeground(new Color(100, 100, 100));
-        roleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Avatar panel
+        JPanel avatarPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JLabel avatarLabel = new JLabel();
+        avatarLabel.setPreferredSize(new Dimension(120, 120));
+        avatarLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        avatarLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
         
-        titlePanel.add(titleLabel);
-        titlePanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        titlePanel.add(roleLabel);
+        // Placeholder for avatar (can be replaced with actual image)
+        avatarLabel.setText("📷");
+        avatarLabel.setFont(new Font("Arial", Font.PLAIN, 48));
+        avatarLabel.setVerticalAlignment(SwingConstants.CENTER);
         
-        headerPanel.add(avatarPanel, BorderLayout.WEST);
-        headerPanel.add(titlePanel, BorderLayout.CENTER);
+        avatarPanel.add(avatarLabel);
+        headerPanel.add(titleLabel, BorderLayout.NORTH);
+        headerPanel.add(avatarPanel, BorderLayout.CENTER);
         
-        // Create card-like panel for user information
-        JPanel infoCardPanel = new JPanel(new BorderLayout());
-        infoCardPanel.setBackground(Color.WHITE);
-        infoCardPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(230, 230, 230), 1, true),
-                BorderFactory.createEmptyBorder(20, 20, 20, 20)));
+        // Main info panel
+        JPanel infoPanel = new JPanel(new GridBagLayout());
+        infoPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Thông tin cá nhân"),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)));
         
-        // Info panel with user details
-        JPanel infoPanel = new JPanel(new GridLayout(0, 1, 0, 15));
-        infoPanel.setBackground(Color.WHITE);
+        // Giá trị mặc định khi không có thông tin từ service
+        String fullName = "Chưa có thông tin"; 
+        String email = "Chưa có thông tin";
+        String phone = "Chưa có thông tin";
+        String address = "Chưa có thông tin";
+        String role = "Nhân viên bán hàng";
+        String joinDate = "Chưa có thông tin";
         
-        // Add user details with improved styling
-        addStyledInfoField(infoPanel, "Họ và tên:", currentUser.getFullName());
-        addStyledInfoField(infoPanel, "Email:", currentUser.getEmail());
-        addStyledInfoField(infoPanel, "Số điện thoại:", currentUser.getPhone());
-        addStyledInfoField(infoPanel, "Vai trò:", currentUser.getRole());
-        addStyledInfoField(infoPanel, "Địa chỉ:", currentUser.getAddress());
+        // Lấy thông tin thực tế từ clientService
+        try {
+            if (clientService != null && clientService.getCurrentUser() != null) {
+                User currentUser = clientService.getCurrentUser();
+                
+                // Lấy họ tên
+                if (currentUser.getFullName() != null && !currentUser.getFullName().isEmpty()) {
+                    fullName = currentUser.getFullName();
+                }
+                
+                // Lấy email
+                if (currentUser.getEmail() != null && !currentUser.getEmail().isEmpty()) {
+                    email = currentUser.getEmail();
+                }
+                
+                // Lấy số điện thoại thực tế từ User
+                if (currentUser.getPhone() != null && !currentUser.getPhone().isEmpty()) {
+                    phone = currentUser.getPhone();
+                }
+                
+                // Lấy địa chỉ thực tế từ User
+                if (currentUser.getAddress() != null && !currentUser.getAddress().isEmpty()) {
+                    address = currentUser.getAddress();
+                }
+                
+                // Định dạng ngày tạo tài khoản
+                if (currentUser.getCreatedDate() != null) {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+                    joinDate = dateFormat.format(currentUser.getCreatedDate());
+                }
+            }
+        } catch (Exception e) {
+            // Sử dụng giá trị mặc định nếu có lỗi
+            System.out.println("Không thể lấy thông tin người dùng: " + e.getMessage());
+        }
         
-        infoCardPanel.add(infoPanel, BorderLayout.CENTER);
+        // Setup GridBagLayout
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
         
-        // Add logout button with improved styling
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBackground(new Color(245, 245, 250));
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+        // Row 1: Full Name
+        addLabelAndField(infoPanel, gbc, 0, "Họ và tên:", fullName);
         
+        // Row 2: Email
+        addLabelAndField(infoPanel, gbc, 1, "Email:", email);
+        
+        // Row 3: Phone
+        addLabelAndField(infoPanel, gbc, 2, "Số điện thoại:", phone);
+        
+        // Row 4: Address
+        addLabelAndField(infoPanel, gbc, 3, "Địa chỉ:", address);
+        
+        // Row 5: Role
+        addLabelAndField(infoPanel, gbc, 4, "Vai trò:", role);
+        
+        // Row 6: Join Date
+        addLabelAndField(infoPanel, gbc, 5, "Ngày tham gia:", joinDate);
+        
+        // Security panel
+        JPanel securityPanel = new JPanel(new GridBagLayout());
+        securityPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Bảo mật"),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+        
+        // Change password button
+        JButton changePasswordButton = new JButton("Đổi mật khẩu");
+        changePasswordButton.addActionListener(e -> showChangePasswordDialog());
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        securityPanel.add(changePasswordButton, gbc);
+        
+        // Action panel
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton logoutButton = new JButton("Đăng xuất");
-        logoutButton.setFont(new Font("Arial", Font.BOLD, 14));
+        logoutButton.setBackground(new Color(220, 53, 69));
         logoutButton.setForeground(Color.WHITE);
-        logoutButton.setBackground(new Color(208, 33, 80)); // Màu đỏ hồng từ hình ảnh
-        logoutButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        logoutButton.setFocusPainted(false);
-        logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        logoutButton.addActionListener(e -> logout());
         
-        // Add hover effect
-        logoutButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                logoutButton.setBackground(new Color(178, 23, 60)); // Darker shade when hovered
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                logoutButton.setBackground(new Color(208, 33, 80)); // Original color
-            }
-        });
+        JButton editProfileButton = new JButton("Cập nhật thông tin");
+        editProfileButton.setBackground(new Color(40, 167, 69));
+        editProfileButton.setForeground(Color.WHITE);
+        editProfileButton.addActionListener(e -> editProfile());
         
-        logoutButton.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(this, 
-                    "Bạn có chắc chắn muốn đăng xuất?", 
-                    "Xác nhận đăng xuất", JOptionPane.YES_NO_OPTION);
+        actionPanel.add(editProfileButton);
+        actionPanel.add(logoutButton);
+        
+        // Main content panel to hold everything
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        
+        // Add components to content panel
+        contentPanel.add(infoPanel);
+        contentPanel.add(Box.createVerticalStrut(15));
+        contentPanel.add(securityPanel);
+        contentPanel.add(Box.createVerticalStrut(15));
+        contentPanel.add(actionPanel);
+        
+        // Add all panels to main account panel
+        accountPanel.add(headerPanel, BorderLayout.NORTH);
+        accountPanel.add(contentPanel, BorderLayout.CENTER);
+    }
+    
+    /**
+     * Helper method to add a label and field to a GridBagLayout panel
+     */
+    private void addLabelAndField(JPanel panel, GridBagConstraints gbc, int row, String labelText, String fieldText) {
+        JLabel label = new JLabel(labelText);
+        label.setFont(new Font("Arial", Font.BOLD, 14));
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0.3;
+        panel.add(label, gbc);
+        
+        JLabel field = new JLabel(fieldText);
+        field.setFont(new Font("Arial", Font.PLAIN, 14));
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
+        panel.add(field, gbc);
+    }
+    
+    /**
+     * Show dialog to change password
+     */
+    private void showChangePasswordDialog() {
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+        
+        JPasswordField currentPassword = new JPasswordField();
+        JPasswordField newPassword = new JPasswordField();
+        JPasswordField confirmPassword = new JPasswordField();
+        
+        panel.add(new JLabel("Mật khẩu hiện tại:"));
+        panel.add(currentPassword);
+        panel.add(new JLabel("Mật khẩu mới:"));
+        panel.add(newPassword);
+        panel.add(new JLabel("Xác nhận mật khẩu mới:"));
+        panel.add(confirmPassword);
+        
+        int result = JOptionPane.showConfirmDialog(this, panel, "Đổi mật khẩu",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        
+        if (result == JOptionPane.OK_OPTION) {
+            String currentPass = new String(currentPassword.getPassword());
+            String newPass = new String(newPassword.getPassword());
+            String confirmPass = new String(confirmPassword.getPassword());
             
-            if (confirm == JOptionPane.YES_OPTION) {
-                dispose();
-                new LoginFrame().setVisible(true);
+            if (currentPass.isEmpty() || newPass.isEmpty() || confirmPass.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
             }
-        });
-        
-        buttonPanel.add(logoutButton);
-        
-        // Assemble all panels
-        userInfoPanel.add(headerPanel);
-        userInfoPanel.add(infoCardPanel);
-        userInfoPanel.add(buttonPanel);
-        
-        // Add a scroll pane in case the window is resized
-        JScrollPane scrollPane = new JScrollPane(userInfoPanel);
-        scrollPane.setBorder(null);
-        scrollPane.setBackground(new Color(245, 245, 250));
-        scrollPane.getViewport().setBackground(new Color(245, 245, 250));
-        
-        accountPanel.add(scrollPane, BorderLayout.CENTER);
-    }
-    
-    /**
-     * Helper method to add information fields to the account panel with improved styling
-     */
-    private void addStyledInfoField(JPanel panel, String label, String value) {
-        JPanel fieldPanel = new JPanel(new BorderLayout(10, 0));
-        fieldPanel.setBackground(Color.WHITE);
-        
-        JLabel labelComponent = new JLabel(label);
-        labelComponent.setFont(new Font("Arial", Font.BOLD, 14));
-        labelComponent.setForeground(new Color(80, 80, 80));
-        
-        JLabel valueComponent = new JLabel(value != null ? value : "");
-        valueComponent.setFont(new Font("Arial", Font.PLAIN, 14));
-        valueComponent.setForeground(new Color(50, 50, 50));
-        
-        // Add a bottom border to create a line effect
-        JPanel bottomLine = new JPanel();
-        bottomLine.setPreferredSize(new Dimension(fieldPanel.getWidth(), 1));
-        bottomLine.setBackground(new Color(240, 240, 240));
-        
-        fieldPanel.add(labelComponent, BorderLayout.WEST);
-        fieldPanel.add(valueComponent, BorderLayout.EAST);
-        fieldPanel.add(bottomLine, BorderLayout.SOUTH);
-        
-        panel.add(fieldPanel);
-    }
-    
-    /**
-     * Helper method to get initials from a name
-     */
-    private String getInitials(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            return "?";
+            
+            if (!newPass.equals(confirmPass)) {
+                JOptionPane.showMessageDialog(this, "Mật khẩu mới không khớp", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // In a real app, call clientService to change password
+            // For demo purposes, just show success
+            JOptionPane.showMessageDialog(this, "Đổi mật khẩu thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         }
+    }
+    
+    /**
+     * Log out of the application
+     */
+    private void logout() {
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất",
+                JOptionPane.YES_NO_OPTION);
         
-        String[] parts = name.split("\\s+");
-        if (parts.length == 1) {
-            return parts[0].substring(0, 1).toUpperCase();
-        } else {
-            return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
+        if (confirm == JOptionPane.YES_OPTION) {
+            // Sử dụng ApplicationManager để quay lại màn hình đăng nhập
+            org.client.app.ApplicationManager.getInstance().showLoginScreen();
+            this.dispose();
         }
     }
     
     /**
-     * Helper method to add information fields to the account panel
+     * Edit user profile
      */
-    private void addInfoField(JPanel panel, String label, String value) {
-        JLabel labelComponent = new JLabel(label);
-        labelComponent.setFont(new Font("Arial", Font.BOLD, 14));
+    private void editProfile() {
+        JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
         
-        JLabel valueComponent = new JLabel(value != null ? value : "");
-        valueComponent.setFont(new Font("Arial", Font.PLAIN, 14));
+        JTextField nameField = new JTextField("Minh - Staff");
+        JTextField phoneField = new JTextField("0123456789");
+        JTextField addressField = new JTextField("123 Đường Lê Lợi, Quận 1, TP.HCM");
         
-        panel.add(labelComponent);
-        panel.add(valueComponent);
+        panel.add(new JLabel("Họ và tên:"));
+        panel.add(nameField);
+        panel.add(new JLabel("Số điện thoại:"));
+        panel.add(phoneField);
+        panel.add(new JLabel("Địa chỉ:"));
+        panel.add(addressField);
+        
+        int result = JOptionPane.showConfirmDialog(this, panel, "Cập nhật thông tin",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        
+        if (result == JOptionPane.OK_OPTION) {
+            // In a real app, call clientService to update user info
+            // For demo purposes, just show success
+            JOptionPane.showMessageDialog(this, "Cập nhật thông tin thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            // Refresh account panel to show updated info
+            accountPanel.removeAll();
+            initAccountPanel();
+            accountPanel.revalidate();
+            accountPanel.repaint();
+        }
     }
     
-    /**
-     * Initialize the search panel with tabs for searching products, staff, and customers.
-     */
-    private void initSearchPanel() {
-        searchPanel = new JPanel(new BorderLayout());
-        
-        // Create tabbed pane for different search types
-        JTabbedPane searchTabs = new JTabbedPane();
-        
-        // Create the product search panel
-        JPanel productSearchPanel = createProductSearchPanel();
-        searchTabs.addTab("Tìm sản phẩm", productSearchPanel);
-        
-        // Create the staff search panel
-        JPanel staffSearchPanel = createStaffSearchPanel();
-        searchTabs.addTab("Tìm nhân viên", staffSearchPanel);
-        
-        // Create the customer search panel
-        JPanel customerSearchPanel = createCustomerSearchPanel();
-        searchTabs.addTab("Tìm khách hàng", customerSearchPanel);
-        
-        searchPanel.add(searchTabs, BorderLayout.CENTER);
-    }
-    
-    /**
-     * Create the product search panel.
-     */
-    private JPanel createProductSearchPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        // Search controls panel
-        JPanel searchControlsPanel = new JPanel(new BorderLayout(5, 0));
-        JTextField searchField = new JTextField(20);
-        searchField.setFont(new Font("Arial", Font.PLAIN, 14));
-        JButton searchButton = new JButton("Tìm kiếm");
-        searchButton.setFont(new Font("Arial", Font.BOLD, 14));
-        
-        searchControlsPanel.add(new JLabel("Tên sản phẩm: "), BorderLayout.WEST);
-        searchControlsPanel.add(searchField, BorderLayout.CENTER);
-        searchControlsPanel.add(searchButton, BorderLayout.EAST);
-        
-        // Results table
-        String[] columnNames = {"ID", "Tên sản phẩm", "Giá", "Số lượng", "Mô tả"};
-        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        
-        JTable resultsTable = new JTable(tableModel);
-        resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        resultsTable.setRowHeight(25);
-        JScrollPane scrollPane = new JScrollPane(resultsTable);
-        
-        // Add components to panel
-        panel.add(searchControlsPanel, BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        // Add search button action
-        searchButton.addActionListener(e -> {
-            String keyword = searchField.getText().trim();
-            if (keyword.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập từ khóa tìm kiếm", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
-            
-            try {
-                // Clear the table
-                tableModel.setRowCount(0);
-                
-                // Search for products
-                List<Product> products = clientService.searchProducts(keyword);
-                
-                if (products.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Không tìm thấy sản phẩm nào", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    // Add products to the table
-                    for (Product product : products) {
-                        Object[] row = {
-                            product.getId(),
-                            product.getName(),
-                            String.format("%,.0f VNĐ", product.getPrice()),
-                            product.getQuantity(),
-                            product.getDescription()
-                        };
-                        tableModel.addRow(row);
-                    }
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Lỗi khi tìm kiếm sản phẩm: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-        
-        return panel;
-    }
-    
-    /**
-     * Create the staff search panel.
-     */
-    private JPanel createStaffSearchPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        // Search controls panel
-        JPanel searchControlsPanel = new JPanel(new BorderLayout(5, 0));
-        JTextField searchField = new JTextField(20);
-        searchField.setFont(new Font("Arial", Font.PLAIN, 14));
-        JButton searchButton = new JButton("Tìm kiếm");
-        searchButton.setFont(new Font("Arial", Font.BOLD, 14));
-        
-        searchControlsPanel.add(new JLabel("Tên hoặc email: "), BorderLayout.WEST);
-        searchControlsPanel.add(searchField, BorderLayout.CENTER);
-        searchControlsPanel.add(searchButton, BorderLayout.EAST);
-        
-        // Results table
-        String[] columnNames = {"ID", "Họ tên", "Email", "Vai trò", "Số điện thoại"};
-        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        
-        JTable resultsTable = new JTable(tableModel);
-        resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        resultsTable.setRowHeight(25);
-        JScrollPane scrollPane = new JScrollPane(resultsTable);
-        
-        // Add components to panel
-        panel.add(searchControlsPanel, BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        // Add search button action
-        searchButton.addActionListener(e -> {
-            String keyword = searchField.getText().trim();
-            if (keyword.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập từ khóa tìm kiếm", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
-            
-            try {
-                // Clear the table
-                tableModel.setRowCount(0);
-                
-                // Search for users
-                List<User> users = clientService.searchUsers(keyword);
-                
-                if (users.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Không tìm thấy nhân viên nào", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    // Add users to the table
-                    for (User user : users) {
-                        Object[] row = {
-                            user.getId(),
-                            user.getFullName(),
-                            user.getEmail(),
-                            user.getRole(),
-                            user.getPhone()
-                        };
-                        tableModel.addRow(row);
-                    }
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Lỗi khi tìm kiếm nhân viên: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-        
-        return panel;
-    }
-    
-    /**
-     * Create the customer search panel.
-     */
-    private JPanel createCustomerSearchPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        // Search controls panel
-        JPanel searchControlsPanel = new JPanel(new BorderLayout(5, 0));
-        JTextField searchField = new JTextField(20);
-        searchField.setFont(new Font("Arial", Font.PLAIN, 14));
-        JButton searchButton = new JButton("Tìm kiếm");
-        searchButton.setFont(new Font("Arial", Font.BOLD, 14));
-        
-        searchControlsPanel.add(new JLabel("Tên, email hoặc số điện thoại: "), BorderLayout.WEST);
-        searchControlsPanel.add(searchField, BorderLayout.CENTER);
-        searchControlsPanel.add(searchButton, BorderLayout.EAST);
-        
-        // Results table
-        String[] columnNames = {"ID", "Họ tên", "Email", "Số điện thoại", "Địa chỉ"};
-        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        
-        JTable resultsTable = new JTable(tableModel);
-        resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        resultsTable.setRowHeight(25);
-        JScrollPane scrollPane = new JScrollPane(resultsTable);
-        
-        // Add components to panel
-        panel.add(searchControlsPanel, BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        // Add search button action
-        searchButton.addActionListener(e -> {
-            String keyword = searchField.getText().trim();
-            if (keyword.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập từ khóa tìm kiếm", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
-            
-            try {
-                // Clear the table
-                tableModel.setRowCount(0);
-                
-                // Search for customers
-                List<Customer> customers = clientService.searchCustomers(keyword);
-                
-                if (customers.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng nào", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    // Add customers to the table
-                    for (Customer customer : customers) {
-                        Object[] row = {
-                            customer.getId(),
-                            customer.getName(),
-                            customer.getEmail(),
-                            customer.getPhone(),
-                            customer.getAddress()
-                        };
-                        tableModel.addRow(row);
-                    }
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Lỗi khi tìm kiếm khách hàng: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-        
-        return panel;
-    }
-
     /**
      * Initialize the help panel.
      */
     private void initHelpPanel() {
         helpPanel = new JPanel(new BorderLayout());
         helpPanel.add(new JLabel("Thông tin trợ giúp sẽ được hiển thị ở đây.", SwingConstants.CENTER));
+    }
+    
+    /**
+     * Tìm kiếm sản phẩm dựa trên từ khóa
+     */
+    private void searchProducts() {
+        String keyword = searchField.getText().trim();
+        
+        if (keyword.isEmpty()) {
+            // Nếu không có từ khóa, hiển thị tất cả sản phẩm
+            loadSampleProducts();
+            return;
+        }
+        
+        // Chuyển từ khóa về chữ thường cho tìm kiếm không phân biệt hoa/thường
+        keyword = keyword.toLowerCase();
+        
+        // Xóa dữ liệu hiện tại
+        productTableModel.setRowCount(0);
+        
+        // Mảng dữ liệu sản phẩm mẫu
+        String[][] sampleProducts = {
+            {"Áo thun basic", "150,000 đ"},
+            {"Áo sơ mi trắng", "350,000 đ"},
+            {"Quần jean skinny", "450,000 đ"},
+            {"Váy liền thân", "450,000 đ"},
+            {"Giày thể thao", "550,000 đ"}
+        };
+        
+        // Lọc và thêm sản phẩm vào bảng
+        boolean found = false;
+        for (String[] product : sampleProducts) {
+            // Tìm kiếm không phân biệt hoa thường
+            if (product[0].toLowerCase().contains(keyword)) {
+                addProductRow(product[0], product[1]);
+                found = true;
+            }
+        }
+        
+        // Hiển thị thông báo nếu không tìm thấy sản phẩm nào
+        if (!found) {
+            JOptionPane.showMessageDialog(this, 
+                    "Không tìm thấy sản phẩm nào phù hợp với từ khóa '" + searchField.getText() + "'", 
+                    "Thông báo", 
+                    JOptionPane.INFORMATION_MESSAGE);
+            // Hiển thị lại tất cả sản phẩm nếu không tìm thấy
+            loadSampleProducts();
+        }
+        
+        // Bỏ chọn sản phẩm trước đó và tắt nút thêm vào giỏ hàng
+        productTable.clearSelection();
+        addToCartButton.setEnabled(false);
     }
     
     /**
@@ -1117,36 +790,13 @@ public class StaffPOSFrame extends JFrame {
         StringBuilder summary = new StringBuilder();
         summary.append("Chi tiết đơn hàng:\n\n");
         
-        // Create order items list
-        List<CartItem> orderItems = new ArrayList<>();
-        double total = 0;
-        
         for (int i = 0; i < cartTableModel.getRowCount(); i++) {
-            String productName = (String) cartTableModel.getValueAt(i, 0);
-            String priceString = (String) cartTableModel.getValueAt(i, 1);
-            int quantity = Integer.parseInt(cartTableModel.getValueAt(i, 2).toString());
-            String totalString = (String) cartTableModel.getValueAt(i, 3);
-            
-            // Clean price string and parse
-            priceString = priceString.replace(",", "").replace("đ", "").trim();
-            double price = Double.parseDouble(priceString);
-            
-            // Create cart item
-            CartItem item = new CartItem();
-            item.setProductId(i + 1); // Temporary ID for mock implementation
-            item.setProductName(productName);
-            item.setPrice(price);
-            item.setQuantity(quantity);
-            orderItems.add(item);
-            
-            summary.append(productName)
+            summary.append(cartTableModel.getValueAt(i, 0))
                    .append(" x ")
-                   .append(quantity)
+                   .append(cartTableModel.getValueAt(i, 2))
                    .append(" = ")
-                   .append(totalString)
+                   .append(cartTableModel.getValueAt(i, 3))
                    .append("\n");
-                   
-            total += price * quantity;
         }
         
         summary.append("\nTổng cộng: ").append(totalPriceLabel.getText().substring(11));
@@ -1156,54 +806,10 @@ public class StaffPOSFrame extends JFrame {
                 "Xác nhận đơn hàng", JOptionPane.YES_NO_OPTION);
         
         if (confirm == JOptionPane.YES_OPTION) {
-            try {
-                // Create order object
-                Order order = new Order();
-                
-                // Convert CartItem to OrderItem
-                List<OrderItem> orderItemList = new ArrayList<>();
-                for (CartItem cartItem : orderItems) {
-                    OrderItem orderItem = new OrderItem();
-                    orderItem.setProductId(cartItem.getProductId());
-                    orderItem.setProductName(cartItem.getProductName());
-                    orderItem.setQuantity(cartItem.getQuantity());
-                    orderItem.setPrice(cartItem.getPrice());
-                    orderItemList.add(orderItem);
-                }
-                
-                order.setItems(orderItemList);
-                order.setTotalAmount(total);
-                
-                // Format the date as string
-                java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                order.setOrderDate(dateFormat.format(new java.util.Date()));
-                
-                // Set customer information from current user
-                if (currentUser != null) {
-                    order.setCustomerName(currentUser.getFullName());
-                    order.setCustomerPhone(currentUser.getPhone());
-                    order.setCustomerAddress(currentUser.getAddress());
-                }
-                
-                // Call service to place order
-                boolean success = clientService.placeOrder(order);
-                
-                if (success) {
-                    JOptionPane.showMessageDialog(this, "Đơn hàng đã được lưu thành công!");
-                    cartTableModel.setRowCount(0);
-                    updateTotalPrice();
-                    updateCartButtonStates();
-                } else {
-                    JOptionPane.showMessageDialog(this, 
-                        "Có lỗi xảy ra khi lưu đơn hàng. Vui lòng thử lại sau.", 
-                        "Lỗi", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(this, 
-                    "Có lỗi xảy ra khi xử lý đơn hàng: " + e.getMessage(), 
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
+            JOptionPane.showMessageDialog(this, "Đơn hàng đã được xử lý thành công!");
+            cartTableModel.setRowCount(0);
+            updateTotalPrice();
+            updateCartButtonStates();
         }
     }
     
